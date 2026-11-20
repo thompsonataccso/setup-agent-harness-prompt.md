@@ -1,6 +1,6 @@
 # Agent Harness Setup Prompt
 
-> Copy everything below the line and paste it into Copilot Chat (or any AI agent) in your target project.
+> Copy everything below the line and paste it into GitHub Copilot Chat, Claude Code, or any AI agent in your target project.
 
 ---
 
@@ -12,15 +12,47 @@ You are setting up a structured agentic workflow harness for this project. Follo
 
 Ask me the following questions before creating any files:
 
-1. **Project name** — What should I call this project in the instructions? (Default: folder name)
-2. **Ticket prefix** — What prefix do your tickets use? (e.g., JIRA, PROJ, MWD, TASK)
-3. **Output location** — Should `project-context.md` live in `memorybank/` (default) or somewhere else (e.g., root, `docs/`)?
+1. **AI tool** — Which AI coding tool will this project use? If you can tell which tool you are running in, propose it as the default.
+   - `copilot` — GitHub Copilot (VS Code, Copilot CLI, Copilot coding agent)
+   - `claude` — Claude Code
+   - `both` — both tools share one setup
+2. **Project name** — What should I call this project in the instructions? (Default: folder name)
+3. **Ticket prefix** — What prefix do your tickets use? (e.g., JIRA, PROJ, MWD, TASK)
+4. **Output location** — Should `project-context.md` live in `memorybank/` (default) or somewhere else (e.g., root, `docs/`)?
+5. **Writing style (optional)** — Should agent-written documentation use **ASD-STE100 Simplified Technical English**? Explain this option to me in 2–3 sentences before I answer:
+   - ASD-STE100 is a controlled-language standard from aerospace maintenance manuals. It uses short sentences, one idea per sentence, active voice, and a small set of simple words with one meaning each.
+   - When it is on, the agent writes plans, task files, review findings, and memorybank docs in this style. This makes AI output faster to read and review. Code is not affected.
+   - It installs the `asd-ste100` skill from https://github.com/JAICHANGPARK/ASD-STE100 (MIT license).
+
+   Options:
+   - `no` — normal writing style (default)
+   - `80` — Karpathy's **80% Pragmatic Mode**: STE rules, but modern tech terms are allowed (recommended for software)
+   - `strict` — full **ASD-STE100 Issue 9** rules
 
 Wait for my answers before proceeding.
 
 ### Step 2 — Create the File Structure
 
 Once I answer, create the following files. Replace `{PROJECT}` with the project name, `{PREFIX}` with the ticket prefix, and `{DATE}` with today's date.
+
+Replace the tool-specific placeholders based on my answer to question 1:
+
+| Placeholder | `copilot` | `claude` | `both` |
+|-------------|-----------|----------|--------|
+| `{TOOL}` | GitHub Copilot | Claude Code | GitHub Copilot & Claude Code |
+| `{INSTRUCTIONS_FILE}` | `.github/copilot-instructions.md` | `CLAUDE.md` | `.github/copilot-instructions.md` |
+| `{SKILLS_DIR}` | `.github/skills` | `.claude/skills` | `.claude/skills` (both tools read this folder) |
+
+**Tool-specific rules:**
+- **`claude`** — Claude Code does not read `agents.md` when a `CLAUDE.md` exists. Put the line `@agents.md` directly below the title of `CLAUDE.md` so that Claude imports it.
+- **`both`** — Write the full instructions to `.github/copilot-instructions.md`. Then create a short root `CLAUDE.md` that imports both shared files:
+
+  ```markdown
+  # {PROJECT} — Claude Code Instructions
+
+  @agents.md
+  @.github/copilot-instructions.md
+  ```
 
 ---
 
@@ -109,10 +141,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
-#### File: `.github/copilot-instructions.md`
+#### File: `{INSTRUCTIONS_FILE}`
 
 ```markdown
-# {PROJECT} - GitHub Copilot Instructions
+# {PROJECT} - {TOOL} Instructions
 
 ## Prerequisites — Always Load Project Context
 
@@ -138,7 +170,7 @@ All development tasks **must** follow the D5 workflow. No code changes should be
 
 When the user says **"StartTask {PREFIX}-XXXX"** (or similar), initiate the D5 workflow:
 
-> 💡 **Model Hint:** Use a **thinking/reasoning model** (e.g., Claude Opus, o3) for the **Define** and **Discover** phases — these require deep reasoning and thorough investigation. Once the implementation plan is **approved**, switch to a **faster implementation model** (e.g., Claude Sonnet, GPT-4o) for the **Deliver** grunt work.
+> 💡 **Model Hint:** Use a **thinking/reasoning model** (e.g., Claude Opus, o3) for the **Define** and **Discover** phases — these require deep reasoning and thorough investigation. Once the implementation plan is **approved**, switch to a **faster implementation model** (e.g., Claude Sonnet, GPT-4o) for the **Deliver** grunt work. For the Deliver **REVIEW** step, switch back to a reasoning model — ideally a different model than the one that wrote the code. (In Claude Code, switch models with `/model`.)
 
 1. Ask the user to provide the ticket details or describe the task.
 2. Walk through the **Define** phase by asking:
@@ -194,7 +226,7 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 
 #### 3. Deliver — The Smallest Possible Change
 
-> ⚠️ **HARD RULE — NO EXCEPTIONS**: The Deliver phase is split into **PLAN** and **IMPLEMENT**. You MUST complete PLAN and receive explicit human approval BEFORE writing any code. Under NO circumstances should you modify any source file until the user explicitly approves.
+> ⚠️ **HARD RULE — NO EXCEPTIONS**: The Deliver phase is split into **PLAN**, **IMPLEMENT**, and **REVIEW**. You MUST complete PLAN and receive explicit human approval BEFORE writing any code. Under NO circumstances should you modify any source file until the user explicitly approves. You MUST complete REVIEW before moving to Demonstrate.
 
 **Step 1 — PLAN (no code changes allowed):**
 - Plan the minimal set of changes required.
@@ -215,6 +247,31 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 - **Never** fold unrelated fixes into the patch — log those in `memorybank/changelog.md`.
 - If tests do not exist for the affected area, write them.
 
+**Step 3 — REVIEW (after the plan is implemented and green):**
+- Update `memorybank/ticket-progress.md` status to `🔎 In Review`.
+- **Review with fresh eyes.** If your tool supports a separate reviewer agent, sub-agent (e.g., a Claude Code subagent), or a different model, use it. Give it the task file and the diff — not your implementation reasoning.
+- Review the **full diff** of the task (e.g., `git diff` against the starting point) — every changed file, not only the last change.
+- **Review checklist:**
+  1. **Plan conformance** — every approved plan item is done; nothing outside the plan was changed.
+  2. **Definition of Done** — every acceptance criterion is addressed.
+  3. **Correctness** — logic errors, edge cases (null/empty, boundaries, error paths), concurrency, resource cleanup.
+  4. **Security** — input validation, injection, authorization checks, no secrets in code or logs.
+  5. **Project rules** — follows `memorybank/project-context.md` and the business rules in affected `memorybank/components/*.md`.
+  6. **Behavioral guidelines** — follows `agents.md`: simplest solution, surgical changes, no speculative code, orphans removed.
+  7. **Tests** — new and changed behavior is covered; tests check behavior, not implementation details.
+  8. **Hygiene** — no debug output, commented-out code, stray TODOs, or temporary files.
+- **Classify each finding:**
+  - 🔴 **Blocking** — bug, security issue, missed Definition of Done, or project-rule violation.
+  - 🟡 **Non-blocking** — suggestion or improvement.
+- Record all findings in the task file under **Review**.
+- **Review-fix loop:**
+  1. Fix each 🔴 blocking finding with the smallest change.
+  2. Re-run build + tests.
+  3. Re-review the changed parts.
+  4. **Stop when:** no blocking findings remain, OR the same finding persists after two fix attempts (escalate to the user), OR a fix needs a change outside the approved plan (stop and request approval).
+- Do **not** apply 🟡 non-blocking findings without approval — list them for the user in Demonstrate.
+- **Never** move to Demonstrate with open 🔴 blocking findings.
+
 #### 4. Demonstrate — Prove the Fix with Test Output
 
 - Update `memorybank/ticket-progress.md` status to `🧪 Testing`.
@@ -223,7 +280,7 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 - Record test output in the task file under **Test Results**.
 - Build must pass.
 - **🛑 STOP — Human Verification Required.**
-  - Present test results to the user.
+  - Present test results and the review summary (fixed findings + open 🟡 suggestions) to the user.
   - Ask the user to manually test and confirm.
   - **Do NOT proceed until the user explicitly confirms.**
   - **Feedback repair loop:** If issues reported:
@@ -297,6 +354,13 @@ _(Updated progressively — each section filled in as discovery proceeds)_
 ### Changes Made
 - File: `path/to/file` — Description of change
 
+### Review
+- **Reviewer**: (self / sub-agent / model name)
+- **Iterations**:
+
+| # | Severity | Finding | File | Resolution |
+|---|----------|---------|------|------------|
+
 ## Demonstrate
 ### Test Results
 - Build: ✅ / ❌
@@ -339,6 +403,7 @@ Track the status of all {PREFIX} tasks across sessions. Updated at **every phase
 | 🔍 | Discovery | Investigating the codebase |
 | 📋 | Awaiting Approval | Implementation plan ready, waiting for human approval |
 | 🚧 | In Progress | Approved and actively being implemented |
+| 🔎 | In Review | Implementation done, reviewing the diff and fixing findings |
 | 🧪 | Testing | Running tests and verifying the fix |
 | 📝 | Documenting | Writing up changes and updating docs |
 | ✅ | Done | Completed and moved to completedTasks/ |
@@ -508,7 +573,7 @@ Last Updated: {DATE}
 
 ---
 
-#### File: `.github/skills/generate-project-context/SKILL.md`
+#### File: `{SKILLS_DIR}/generate-project-context/SKILL.md`
 
 ```markdown
 ---
@@ -521,7 +586,7 @@ Follow the instructions in ./workflow.md.
 
 ---
 
-#### File: `.github/skills/generate-project-context/workflow.md`
+#### File: `{SKILLS_DIR}/generate-project-context/workflow.md`
 
 ```markdown
 # Generate Project Context Workflow
@@ -661,12 +726,54 @@ _(1–2 sentences: what this feature does from the user's perspective)_
 
 ---
 
+#### Optional: ASD-STE100 Writing Style (only if enabled in Step 1)
+
+Skip this section if I answered `no` to question 5. Otherwise, replace `{STE_MODE}` with `80% Pragmatic Mode` (answer `80`) or `Strict Mode` (answer `strict`) and do the following:
+
+1. **Install the skill** (MIT licensed — keep the upstream files unchanged):
+   - **`copilot` or `both`:** Download https://raw.githubusercontent.com/JAICHANGPARK/ASD-STE100/main/skills/asd-ste100/SKILL.md and save it **unchanged** to `{SKILLS_DIR}/asd-ste100/SKILL.md`. If you cannot access the network, give me the URL and target path and ask me to save the file myself.
+   - **`claude`:** Recommend the full Claude Code plugin. It includes the skill plus the `/asd` command, the STE side pane, and STE lint/rewrite tools, and it requires Claude Code v2.1.287 or later. Show me these commands and ask whether you should run them or whether I run them myself:
+
+     ```bash
+     claude plugin marketplace add JAICHANGPARK/ASD-STE100
+     claude plugin install asd-ste100@asd-ste100 --scope project
+     ```
+
+     `--scope project` enables the plugin in `.claude/settings.json` for everyone who works in the repository. Each collaborator runs the install command once per clone. If I prefer only the skill without the plugin, use the download method above instead and save the file to `.claude/skills/asd-ste100/SKILL.md`.
+2. **Append this section** to the end of `{INSTRUCTIONS_FILE}`:
+
+```markdown
+---
+
+## Writing Style — ASD-STE100 ({STE_MODE})
+
+Write all human-facing prose that this workflow produces in **ASD-STE100 Simplified Technical English, {STE_MODE}**. Load the `asd-ste100` skill for the full rules.
+
+**Apply to:** task files, plans, review findings, summaries presented at 🛑 STOP points, and all `memorybank/` docs (including component docs and `project-context.md`).
+
+**Do not apply to:** source code, identifiers, CLI commands, file paths, quoted text, tool or test output, and existing text that the task does not change.
+
+**Core rules (quick reference):**
+- One idea per sentence. One topic per paragraph, max 6 sentences.
+- Sentence length: 80% Pragmatic Mode — target 15–22 words, max 25. Strict Mode — instructions max 20 words, descriptions max 25.
+- Active voice. Use the imperative for steps ("Run the tests.").
+- Simple words with one meaning: *use* (not *utilize*), *start* (not *initiate*), *stop* (not *terminate*), *before* (not *prior to*), *change* (not *modify*).
+- Max 3 nouns in a row.
+- Use *must* or *can* or an exact condition — not *should*, *could*, or *might*.
+- Use **WARNING** (risk to data, security, or uptime) and **CAUTION** (risk to the system) with the command first, then the risk.
+- No semicolons. Strict Mode only: no contractions and no Latin abbreviations (*e.g.*, *i.e.*, *etc.*).
+
+**Review:** In the Deliver **REVIEW** step, also check that docs written or changed in this task follow these rules. Record violations as 🟡 non-blocking findings.
+```
+
+---
+
 ### Step 3 — Update README
 
 Add a section to the project's `README.md` (create one if it doesn't exist) that documents the agent harness. Include:
 
 1. **Development Workflow (D5)** — brief description + table of commands (`StartTask {PREFIX}-XXXX`, `ReviewTasks`)
-2. **Agent Configuration** — table linking to `.github/copilot-instructions.md`, `agents.md`, `memorybank/project-context.md`
+2. **Agent Configuration** — table linking to `{INSTRUCTIONS_FILE}`, `agents.md`, `memorybank/project-context.md` (and `CLAUDE.md` for `both`)
 3. **Documentation (Memory Bank)** — table of all memorybank files with descriptions
 4. **Component Documentation** — table linking to each `memorybank/components/*.md` file (initially just the `_index.md` template reference)
 
@@ -686,9 +793,10 @@ All development follows the **D5 agentic workflow** with continuous progress tra
 
 | File | Purpose |
 |------|--------|
-| `.github/copilot-instructions.md` | D5 workflow definition, task tracking, phase gates |
+| `{INSTRUCTIONS_FILE}` | D5 workflow definition, task tracking, phase gates |
 | `agents.md` | Behavioral guidelines — think first, simplicity, surgical changes |
 | `memorybank/project-context.md` | Tech stack rules, coding conventions, anti-patterns |
+| `{SKILLS_DIR}/` | Agent skills (e.g., `generate-project-context`) |
 
 ### Documentation (Memory Bank)
 
@@ -701,6 +809,18 @@ All development follows the **D5 agentic workflow** with continuous progress tra
 | `memorybank/ticket-progress.md` | Status tracker for all tickets across sessions |
 | `memorybank/changelog.md` | Ad-hoc changes outside task files |
 | `memorybank/components/` | Per-feature documentation (business rules, data flow, validation) |
+```
+
+For `both`, also add this row to the **Agent Configuration** table:
+
+```markdown
+| `CLAUDE.md` | Claude Code entry point — imports `agents.md` and `.github/copilot-instructions.md` |
+```
+
+If ASD-STE100 is enabled, also add this row to the **Agent Configuration** table (use `.claude/settings.json` as the file if the Claude Code plugin was installed):
+
+```markdown
+| `{SKILLS_DIR}/asd-ste100/SKILL.md` | ASD-STE100 writing style ({STE_MODE}) for plans, task files, and docs |
 ```
 
 Do NOT overwrite existing README content — append the section at the end, or integrate it naturally if the README already has structure.
@@ -730,6 +850,8 @@ If the user says yes, scan the codebase for distinct features and generate one c
 
 After creating all files, show me:
 1. A tree of all files created
-2. Remind me to say **"generate project context"** to populate the rules from my actual codebase
+2. Remind me to say **"generate project context"** to populate the rules from my actual codebase (in Claude Code, I can also run `/generate-project-context`)
 3. Remind me to say **"document components"** to generate/update component documentation
 4. Remind me the workflow commands: `StartTask {PREFIX}-001` and `ReviewTasks`
+5. If ASD-STE100 is enabled, confirm the mode and remind me that I can ask for any explanation "in ASD-STE100" or "in 80% ASD-STE100" (with the Claude Code plugin, also `/asd 80`, `/asd strict`, `/asd pane`)
+6. For `claude` or `both`, remind me to run `/context all` in a new Claude Code session to confirm that `CLAUDE.md` and `agents.md` are loaded
