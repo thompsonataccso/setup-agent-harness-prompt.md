@@ -1,11 +1,12 @@
 # Agent Harness Setup Prompt
 
-> Copy everything below the line and paste it into GitHub Copilot Chat, Claude Code, or any AI agent in your target project.
+> Copy the complete code block below and paste it into GitHub Copilot Chat, Claude Code, or any AI agent in your target project. The block includes project discovery and the project-context requirements.
 
 ---
 
 ## Prompt
 
+````text
 You are setting up a structured agentic workflow harness for this project. Follow these steps exactly:
 
 ### Step 1 — Gather Information
@@ -1108,3 +1109,4 @@ After creating all files, show me:
    - Remind me of the merge flow: Document ends at `🚢 Awaiting Merge`. After the branch is merged into `{BASE_BRANCH}`, I run **`MergeMemorybankTask {PREFIX}-XXXX`** to apply the pending doc updates and close the task.
    - Remind me that the harness exists only on this machine. Teammates do not get it from the repository.
 7. Remind me to start a **new chat/session**, because instruction files are loaded when a session starts.
+````
