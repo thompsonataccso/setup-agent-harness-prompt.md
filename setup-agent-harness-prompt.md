@@ -10,16 +10,26 @@ You are setting up a structured agentic workflow harness for this project. Follo
 
 ### Step 1 — Gather Information
 
+Before asking, look at the workspace. If it contains source code or package manifests (e.g., `package.json`, `*.csproj`, `pyproject.toml`, `go.mod`, `pom.xml`), propose `existing` as the default for question 1. Otherwise, propose `new`.
+
 Ask me the following questions before creating any files:
 
-1. **AI tool** — Which AI coding tool will this project use? If you can tell which tool you are running in, propose it as the default.
+1. **Setup mode** — Is this a new or an existing project?
+   - `new` — new project with little or no code. You will interview me for the project details (Step 1b), because there is no codebase to learn from.
+   - `existing` — existing codebase. You will learn the project details by scanning the code.
+2. **AI tool** — Which AI coding tool will this project use? If you can tell which tool you are running in, propose it as the default.
    - `copilot` — GitHub Copilot (VS Code, Copilot CLI, Copilot coding agent)
    - `claude` — Claude Code
    - `both` — both tools share one setup
-2. **Project name** — What should I call this project in the instructions? (Default: folder name)
-3. **Ticket prefix** — What prefix do your tickets use? (e.g., JIRA, PROJ, MWD, TASK)
-4. **Output location** — Should `project-context.md` live in `memorybank/` (default) or somewhere else (e.g., root, `docs/`)?
-5. **Writing style (optional)** — Should agent-written documentation use **ASD-STE100 Simplified Technical English**? Explain this option to me in 2–3 sentences before I answer:
+3. **Harness sharing** — Should the harness be committed to the repository, or used only on my machine?
+   - `shared` — commit the harness files. The whole team uses the D5 workflow, and the memorybank follows each branch. (default)
+   - `local` — local-only. The harness files are excluded via `.git/info/exclude` and are **never committed**. Use this when teammates use other workflows. The memorybank does not follow branches, so documentation updates are deferred and applied later with the `MergeMemorybankTask` command.
+
+   If I choose `local`, also ask: **Integration branch** — Which branch do feature branches merge into (e.g., `main`, `dev`)? Propose the default from `git symbolic-ref --short refs/remotes/origin/HEAD`.
+4. **Project name** — What should I call this project in the instructions? (Default: folder name)
+5. **Ticket prefix** — What prefix do your tickets use? (e.g., JIRA, PROJ, MWD, TASK)
+6. **Output location** — Should `project-context.md` live in `memorybank/` (default) or somewhere else (e.g., root, `docs/`)?
+7. **Writing style (optional)** — Should agent-written documentation use **ASD-STE100 Simplified Technical English**? Explain this option to me in 2–3 sentences before I answer:
    - ASD-STE100 is a controlled-language standard from aerospace maintenance manuals. It uses short sentences, one idea per sentence, active voice, and a small set of simple words with one meaning each.
    - When it is on, the agent writes plans, task files, review findings, and memorybank docs in this style. This makes AI output faster to read and review. Code is not affected.
    - It installs the `asd-ste100` skill from https://github.com/JAICHANGPARK/ASD-STE100 (MIT license).
@@ -31,11 +41,40 @@ Ask me the following questions before creating any files:
 
 Wait for my answers before proceeding.
 
+### Step 1b — Project Brief (`new` mode only)
+
+Skip this step in `existing` mode.
+
+A new project has no code to learn from, so the project brief replaces the codebase scan. Tell me that I can paste an existing spec, PRD, or notes instead of answering one by one. Then ask me for the details below. Accept "not decided yet" for any item and record it as an open question — do not invent answers.
+
+1. **Purpose** — What problem does the project solve, and for whom (target users)?
+2. **Core features (MVP)** — What must the first usable version do? What is explicitly out of scope?
+3. **Tech stack** — Languages, frameworks, and versions (e.g., .NET 9 + Blazor, Node 22 + Next.js 15, Python 3.13 + FastAPI).
+4. **Architecture** — Monolith, API + SPA, microservices, serverless, CLI, library, mobile app, …?
+5. **Data** — Database or storage, and the main entities.
+6. **Integrations** — External APIs and services, and how they authenticate.
+7. **Auth** — How users sign in, and which roles exist.
+8. **Hosting & deployment** — Where it runs (e.g., Azure, AWS, on-prem, Docker) and the CI/CD tool.
+9. **Testing** — Test frameworks and expectations (unit, integration, e2e, coverage).
+10. **Conventions** — Coding style, folder structure, branching/commit conventions, linters/formatters.
+11. **Constraints** — Performance, security, compliance (e.g., GDPR), accessibility, budget, deadlines.
+
+After I answer, summarize the brief, list the open questions, and ask me to confirm. **Wait for confirmation before proceeding.**
+
 ### Step 2 — Create the File Structure
 
 Once I answer, create the following files. Replace `{PROJECT}` with the project name, `{PREFIX}` with the ticket prefix, and `{DATE}` with today's date.
 
-Replace the tool-specific placeholders based on my answer to question 1:
+**Mode-specific rules:**
+- **`existing`** — Before creating each file, check whether it already exists (especially `agents.md`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and `README.md`). **Never overwrite an existing file.** Show me what you would add, propose a merge (keep the existing rules and add the harness sections), and wait for my approval.
+- **`new`** — Also create `memorybank/project-brief.md` (template below) from the confirmed brief. Do not leave the memorybank files as empty placeholders. Fill them from the brief, and mark every item as **Planned** until code exists:
+  - `architecture.md` — planned structure, modules, and data flow (from items 4–5)
+  - `features.md` — MVP features with status `📋 Planned` (from item 2)
+  - `integrations.md` — planned external services (from item 6)
+  - `setup.md` — planned prerequisites and runtimes (from items 3 and 8)
+  - `project-context.md` — fill **Technology Stack & Versions** and any rules from items 9–10. Set the front-matter `status: 'from_brief'` and keep the other sections as placeholders.
+
+Replace the tool-specific placeholders based on my answer to question 2:
 
 | Placeholder | `copilot` | `claude` | `both` |
 |-------------|-----------|----------|--------|
@@ -53,6 +92,8 @@ Replace the tool-specific placeholders based on my answer to question 1:
   @agents.md
   @.github/copilot-instructions.md
   ```
+
+**Sharing rule (`local`):** Before creating any file, run the pre-check in **Local-Only Mode** (end of Step 2). It can change some of the target paths above.
 
 ---
 
@@ -178,7 +219,7 @@ When the user says **"StartTask {PREFIX}-XXXX"** (or similar), initiate the D5 w
    - **Constraints**: Are there technical, time, or scope constraints?
    - **Definition of Done**: What conditions must be met to consider this complete?
 3. Create a task tracking file at `memorybank/activeTasks/{PREFIX}-XXXX.md` using the template below.
-4. Add an entry to `memorybank/ticket-progress.md` with status `🔍 Discovery`.
+4. Add an entry to `memorybank/ticket-progress.md` with status `🔍 Discovery` (or update the existing `🗂️ Backlog` entry).
 5. Proceed through the remaining D5 phases.
 
 ### ReviewTasks Command
@@ -186,7 +227,7 @@ When the user says **"StartTask {PREFIX}-XXXX"** (or similar), initiate the D5 w
 When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 
 1. Read `memorybank/ticket-progress.md` and identify all tasks that are **not** `✅ Done`.
-2. For each incomplete task, read its task file at `memorybank/activeTasks/{PREFIX}-XXXX.md`.
+2. For each incomplete task, read its task file at `memorybank/activeTasks/{PREFIX}-XXXX.md`. Tickets with status `🗂️ Backlog` have no task file yet — show them as "Not started".
 3. Present a **summary table** showing: Ticket ID, Title, Current status/phase, What's blocking or next.
 4. Ask the user which task(s) to **resume**, **update**, or **close**.
 5. If resuming, pick up the D5 workflow from the phase where it was left off.
@@ -206,6 +247,7 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 #### 2. Discover
 
 - **First:** Read `memorybank/project-context.md` if not already loaded this session.
+- **Read the project brief:** If `memorybank/project-brief.md` exists, read it. It holds the intended scope, stack, and decisions for a project that started from scratch. Follow its decisions, and do not build anything it lists as out of scope.
 - **Read component docs:** Check `memorybank/components/` for any existing documentation on the feature being changed. If a component doc exists, read it to understand current business rules, data flow, and validation before investigating the code.
 - Investigate the codebase **thoroughly** to understand the root cause or area of change.
 - **Scan all layers** — do not skip files. Examine all relevant source directories, configurations, tests, and shared modules.
@@ -294,10 +336,11 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
 - Update `memorybank/ticket-progress.md` status to `📝 Documenting`.
 - Update the task file with a summary of all changes made.
 - **Documentation sync loop** — for each memorybank doc file, check if the task's changes affected its domain. Update if yes, record "N/A" if no:
-  - [ ] `memorybank/features.md` — new features, changed behavior
+  - [ ] `memorybank/features.md` — new features, changed behavior (change `📋 Planned` features to `✅ Implemented` when they are built)
   - [ ] `memorybank/architecture.md` — new entities, services, modules, schema
   - [ ] `memorybank/integrations.md` — new external APIs, auth changes
   - [ ] `memorybank/setup.md` — new env vars, config changes
+  - [ ] `memorybank/project-brief.md` (if it exists) — resolve answered open questions; record decisions that change the original brief, with the date
   - [ ] `memorybank/components/*.md` — update any affected component docs (business rules, data flow, validation, key files). If the task changes a feature that has no component doc yet, **create one** using the template in `memorybank/components/_index.md`. If an existing component doc's business rules, data flow, validation, or key files changed, **update it** to reflect the new reality.
 - **Alignment check** — after updating docs, verify consistency across the three knowledge layers:
   1. `memorybank/project-context.md` — tech stack rules, coding conventions, anti-patterns
@@ -305,7 +348,7 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
   3. `memorybank/components/*.md` — detailed per-feature flows, business rules, validation
   
   If any of these contradict each other after the task's changes, reconcile them now. For example: if a component doc references a validation pattern that `project-context.md` now forbids, update the component doc. If `features.md` lists behavior that a component doc shows has changed, update `features.md`.
-- If the task introduced architectural changes, run `generate-project-context` skill in update mode.
+- If the task introduced architectural changes, run `generate-project-context` skill in update mode. If `project-context.md` still has `status: 'from_brief'` and real code now exists, run it so that the rules come from the actual code.
 - Move task file from `memorybank/activeTasks/` to `memorybank/completedTasks/`.
 - Update `memorybank/ticket-progress.md` status to `✅ Done`.
 - Log any ad-hoc or out-of-scope changes in `memorybank/changelog.md`.
@@ -400,6 +443,7 @@ Track the status of all {PREFIX} tasks across sessions. Updated at **every phase
 
 | Emoji | Status | Meaning |
 |-------|--------|---------|
+| 🗂️ | Backlog | Planned ticket, not started yet (no task file) |
 | 🔍 | Discovery | Investigating the codebase |
 | 📋 | Awaiting Approval | Implementation plan ready, waiting for human approval |
 | 🚧 | In Progress | Approved and actively being implemented |
@@ -565,6 +609,57 @@ Last Updated: {DATE}
 
 ---
 
+#### File: `memorybank/project-brief.md` (`new` mode only)
+
+```markdown
+# Project Brief — {PROJECT}
+
+_The intended scope and decisions for this project, captured before code existed. Agents read this during Discover. Update it only when a decision changes — record the change in the Decision Log._
+
+## Purpose
+- **Problem**:
+- **Target users**:
+
+## MVP Scope
+
+### In scope
+- 
+
+### Out of scope
+- 
+
+## Technical Decisions
+
+| Area | Decision | Notes |
+|------|----------|-------|
+| Language / runtime | | |
+| Framework(s) | | |
+| Architecture | | |
+| Data / storage | | |
+| Integrations | | |
+| Auth | | |
+| Hosting & deployment | | |
+| CI/CD | | |
+| Testing | | |
+| Conventions | | |
+
+## Constraints
+- 
+
+## Open Questions
+
+| # | Question | Status | Answer |
+|---|----------|--------|--------|
+
+## Decision Log
+
+| Date | Decision | Reason | Replaces |
+|------|----------|--------|----------|
+| {DATE} | Initial brief | Project setup | — |
+```
+
+---
+
 #### Directories to create (with `.gitkeep` files):
 
 - `memorybank/activeTasks/.gitkeep`
@@ -598,8 +693,9 @@ This skill produces a single artifact: `project-context.md`, a lean rules docume
 1. **Find the project root.** Use `git rev-parse --show-toplevel` or current working directory.
 2. **Choose output location.** Default: `memorybank/project-context.md`.
 3. **Detect existing context.** If found, ask user: update or start fresh?
-4. **Set the date.** Today's date in YYYY-MM-DD.
-5. **Begin Step 1.**
+4. **Detect a brief-only project.** If `memorybank/project-brief.md` exists and the project has little or no code, use **brief mode**: take rules from the brief (stack, conventions, testing) and from official docs for the chosen versions. Set `status: 'from_brief'`. Once real code exists, run this skill again and replace brief-based rules with rules taken from the code. Flag any difference between the brief and the code to the user.
+5. **Set the date.** Today's date in YYYY-MM-DD.
+6. **Begin Step 1.**
 
 ## Step-execution rules
 
@@ -728,7 +824,7 @@ _(1–2 sentences: what this feature does from the user's perspective)_
 
 #### Optional: ASD-STE100 Writing Style (only if enabled in Step 1)
 
-Skip this section if I answered `no` to question 5. Otherwise, replace `{STE_MODE}` with `80% Pragmatic Mode` (answer `80`) or `Strict Mode` (answer `strict`) and do the following:
+Skip this section if I answered `no` to question 7. Otherwise, replace `{STE_MODE}` with `80% Pragmatic Mode` (answer `80`) or `Strict Mode` (answer `strict`) and do the following:
 
 1. **Install the skill** (MIT licensed — keep the upstream files unchanged):
    - **`copilot` or `both`:** Download https://raw.githubusercontent.com/JAICHANGPARK/ASD-STE100/main/skills/asd-ste100/SKILL.md and save it **unchanged** to `{SKILLS_DIR}/asd-ste100/SKILL.md`. If you cannot access the network, give me the URL and target path and ask me to save the file myself.
@@ -739,7 +835,7 @@ Skip this section if I answered `no` to question 5. Otherwise, replace `{STE_MOD
      claude plugin install asd-ste100@asd-ste100 --scope project
      ```
 
-     `--scope project` enables the plugin in `.claude/settings.json` for everyone who works in the repository. Each collaborator runs the install command once per clone. If I prefer only the skill without the plugin, use the download method above instead and save the file to `.claude/skills/asd-ste100/SKILL.md`.
+     `--scope project` enables the plugin in `.claude/settings.json` for everyone who works in the repository. Each collaborator runs the install command once per clone. **In `local` sharing mode, use `--scope local` instead** — it writes to `.claude/settings.local.json`, which is not committed. If I prefer only the skill without the plugin, use the download method above instead and save the file to `.claude/skills/asd-ste100/SKILL.md`.
 2. **Append this section** to the end of `{INSTRUCTIONS_FILE}`:
 
 ```markdown
@@ -768,7 +864,137 @@ Write all human-facing prose that this workflow produces in **ASD-STE100 Simplif
 
 ---
 
+#### Local-Only Mode (only if `local` in question 3)
+
+Skip this section if I answered `shared`. Otherwise, replace `{BASE_BRANCH}` with the integration branch and apply **all** of the following. In this mode the harness exists only on my machine. Teammates who use other workflows never see it.
+
+**A. Pre-check — before creating any file**
+
+1. Confirm that this is a git repository (`git rev-parse --show-toplevel`). If it is not, stop and tell me — local-only mode needs git. In `new` mode, offer to run `git init` first.
+2. For every harness path, check whether git already tracks it: `git ls-files --error-unmatch <path>`. `.git/info/exclude` only hides **untracked** files, so a tracked file cannot be made local. **Never modify a tracked file.** Use the local alternative instead:
+
+   | Tracked path | Local alternative |
+   |--------------|-------------------|
+   | `.github/copilot-instructions.md` | `.github/instructions/d5-workflow.instructions.md`, with front matter `applyTo: "**"` at the top |
+   | `CLAUDE.md` | `CLAUDE.local.md` (Claude Code loads it next to `CLAUDE.md`) |
+   | `agents.md` / `AGENTS.md` | `memorybank/agents.md`. Add the line `Also read and follow memorybank/agents.md.` below the title of the instructions file (for Claude Code: `@memorybank/agents.md`). |
+   | `README.md` | Do not change — see D below |
+
+3. If you use an alternative path, update every reference and `@` import to it (e.g., the `both`-mode `CLAUDE.md` imports). This rule overrides the `existing`-mode rule that merges into existing files: in `local` mode, a tracked file is never merged into.
+4. Show me the final list of paths that you will create, and wait for my approval.
+
+**B. Exclude the harness from git**
+
+Append this block to `.git/info/exclude`, and skip any line that is already present. Use the final paths from A:
+
+```text
+# Local-only agentic workflow harness (D5)
+memorybank/
+agents.md
+{INSTRUCTIONS_FILE}
+{SKILLS_DIR}/generate-project-context/
+```
+
+Also add these lines where they apply: `CLAUDE.md` (`both`), `{SKILLS_DIR}/asd-ste100/` (ASD-STE100 skill file), `.claude/settings.local.json` (ASD-STE100 plugin), and any local alternative from A. Do **not** exclude the whole `{SKILLS_DIR}/` folder, so that skills the team commits stay visible to git.
+
+**C. Add the merge workflow to the instructions file**
+
+1. In the task file template, add the line `- **Branch**:` to the `## Define` section. In the **StartTask Command**, after creating the task file, record the current branch (`git branch --show-current`) there.
+2. In the **ReviewTasks Command**, add: `For tickets with status 🚢 Awaiting Merge, check whether the branch is merged into {BASE_BRANCH}, and suggest MergeMemorybankTask.`
+3. Insert this block directly after the **ReviewTasks Command** section:
+
+```markdown
+### MergeMemorybankTask Command
+
+When the user says **"MergeMemorybankTask {PREFIX}-XXXX"** (or similar), promote the task's documentation changes to the baseline memorybank.
+
+> **Context:** The memorybank is local-only and represents the truth of the `{BASE_BRANCH}` branch. During the D5 Document phase, changes are written ONLY to the task file's **Pending Documentation Updates** section — baseline docs are NOT touched. Run this command **after** the task branch is merged into `{BASE_BRANCH}`, so that code and docs are in sync.
+
+**Steps:**
+1. Read the task file at `memorybank/activeTasks/{PREFIX}-XXXX.md` and get the branch name.
+2. Verify the merge (read-only): run `git branch -a --merged {BASE_BRANCH}` and check that the task branch appears. If it does not, warn the user and ask for confirmation before proceeding: the local `{BASE_BRANCH}` may be out of date (ask them to pull), or the branch was squash- or rebase-merged (these do not show up in `--merged`).
+3. Read the **Pending Documentation Updates** section.
+4. For each non-N/A entry, apply the documented changes to the corresponding baseline memorybank file. If a component doc must be created, use the template in `memorybank/components/_index.md`.
+5. **Alignment check** — verify consistency across `memorybank/project-context.md`, `memorybank/features.md`, and `memorybank/components/*.md`. Reconcile any contradictions.
+6. If the task introduced architectural changes, or `project-context.md` still has `status: 'from_brief'`, run the `generate-project-context` skill in update mode.
+7. Move the task file from `memorybank/activeTasks/` to `memorybank/completedTasks/`.
+8. Update `memorybank/ticket-progress.md` status to `✅ Done`.
+
+> ⚠️ **Never run git merge, git push, git pull, or any other state-changing git command.** Only read-only git queries are permitted.
+
+### Branch-Aware Memorybank Strategy
+
+The memorybank is **local-only** — it is not committed to git and does not change when switching branches. Therefore:
+
+- **Baseline docs** (`project-context.md`, `features.md`, `architecture.md`, `integrations.md`, `setup.md`, `components/`, `project-brief.md`) represent the truth of `{BASE_BRANCH}`. Treat them as authoritative for the current codebase state.
+- **Task files** (`activeTasks/{PREFIX}-XXXX.md`) hold in-flight knowledge from branches that are not merged yet. This knowledge does NOT go into baseline docs.
+- **After merge**, `MergeMemorybankTask` promotes task knowledge into the baseline docs.
+- **Teammates' changes** that were made outside this harness are not in the memorybank. If Discover finds that a baseline doc disagrees with the code on `{BASE_BRANCH}`, trust the code, log the drift in `memorybank/changelog.md`, and propose a doc update to the user.
+```
+
+4. Replace the **entire** `#### 5. Document` section with this deferred version:
+
+```markdown
+#### 5. Document — Prepare the Change for Review
+
+> ⚠️ **IMPORTANT — Deferred Documentation Strategy:** The memorybank is **local-only** and not branch-aware. Baseline docs represent the truth of `{BASE_BRANCH}`. Because task work happens on a feature branch, **do NOT update baseline docs during this phase.** Record all pending documentation changes in the task file. `MergeMemorybankTask` applies them after the branch is merged into `{BASE_BRANCH}`.
+
+- Update `memorybank/ticket-progress.md` status to `📝 Documenting`.
+- Update the task file with a summary of all changes made.
+- **Documentation audit** — for each baseline doc, check if the task's changes affected its domain. Record what needs updating in the task file's **Pending Documentation Updates** section:
+  - [ ] `memorybank/features.md` — new features, changed behavior (`📋 Planned` → `✅ Implemented`)
+  - [ ] `memorybank/architecture.md` — new entities, services, modules, schema
+  - [ ] `memorybank/integrations.md` — new external APIs, auth changes
+  - [ ] `memorybank/setup.md` — new env vars, config changes, new prerequisites
+  - [ ] `memorybank/project-brief.md` (if it exists) — resolved open questions, changed decisions
+  - [ ] `memorybank/components/*.md` — business rules, data flow, validation, key files. Note if a new component doc is needed.
+  - [ ] `memorybank/project-context.md` — changed patterns, conventions, or anti-patterns
+- For each checked item, write the **exact content/changes** to apply under **Detailed Changes**. Be specific enough that `MergeMemorybankTask` can apply them without re-reading the code.
+- Update `memorybank/ticket-progress.md` status to `🚢 Awaiting Merge`. The task file stays in `memorybank/activeTasks/` until `MergeMemorybankTask` runs.
+- Log any ad-hoc or out-of-scope changes in `memorybank/changelog.md`.
+```
+
+5. In the task file template, replace the `## Document` section with:
+
+```markdown
+## Document
+- **Summary**:
+
+### Pending Documentation Updates
+_(Each baseline doc that needs updating when this branch merges into {BASE_BRANCH}.)_
+
+| Doc File | Change Description |
+|----------|--------------------|
+| `memorybank/features.md` | N/A or describe change |
+| `memorybank/architecture.md` | N/A or describe change |
+| `memorybank/integrations.md` | N/A or describe change |
+| `memorybank/setup.md` | N/A or describe change |
+| `memorybank/project-brief.md` | N/A or describe change |
+| `memorybank/components/*.md` | N/A or describe change |
+| `memorybank/project-context.md` | N/A or describe change |
+
+#### Detailed Changes
+_(For each non-N/A item above, write the exact content to add, change, or remove.)_
+```
+
+6. In `memorybank/ticket-progress.md`, add this row to the status legend between `📝 Documenting` and `✅ Done`:
+   `| 🚢 | Awaiting Merge | Work complete on the branch, waiting for merge into {BASE_BRANCH} |`
+
+**D. README** — Do **not** change the repository `README.md`. It is shared with the team. Write the Step 3 harness section to `memorybank/README.md` instead, and add `MergeMemorybankTask {PREFIX}-XXXX` to its command table.
+
+**E. Git safety** — Do not run `git add`, `git commit`, `git push`, or any other state-changing git command. Do not modify any tracked file.
+
+**F. Verify** — After all files exist:
+1. `git status --porcelain` lists **none** of the harness files.
+2. `git check-ignore -v <path>` reports every harness path as ignored.
+
+Report the results in Step 5.
+
+---
+
 ### Step 3 — Update README
+
+> In `local` sharing mode, do not touch the repository `README.md`. Write this section to `memorybank/README.md` instead (see **Local-Only Mode → D**).
 
 Add a section to the project's `README.md` (create one if it doesn't exist) that documents the agent harness. Include:
 
@@ -825,9 +1051,17 @@ If ASD-STE100 is enabled, also add this row to the **Agent Configuration** table
 
 Do NOT overwrite existing README content — append the section at the end, or integrate it naturally if the README already has structure.
 
+In `new` mode, there is usually no README yet. Create one that starts with `# {PROJECT}`, a 2–3 sentence description from the brief, and the planned tech stack. Then add the harness section above. Also add this row to the **Documentation (Memory Bank)** table:
+
+```markdown
+| `memorybank/project-brief.md` | Original project brief — scope, decisions, open questions |
+```
+
 ---
 
-### Step 4 — Generate Component Docs
+### Step 4 — Mode-Specific Follow-Up
+
+#### `existing` mode — Generate Component Docs
 
 After creating all the scaffolding files, ask me:
 
@@ -844,14 +1078,33 @@ After creating all the scaffolding files, ask me:
 
 If the user says yes, scan the codebase for distinct features and generate one component doc at a time, presenting each for approval before saving. Work through them one by one — don't batch.
 
+Then offer to run the `generate-project-context` skill right away, because the codebase is available now.
+
+#### `new` mode — Propose an Initial Backlog
+
+There are no features to document yet. Instead, propose an initial backlog from the brief:
+
+1. `{PREFIX}-001` must be **project scaffolding**: create the solution/project structure, the build, the test setup, the linter/formatter, and CI for the chosen stack. Do not add features.
+2. Add one ticket for each MVP feature, in a sensible build order. Keep each ticket small enough for one D5 cycle.
+3. Add a ticket for each open question that blocks implementation (e.g., a spike to choose a database).
+
+Present the list as a table (Ticket, Title, Depends on) and wait for my approval. Then add the approved tickets to `memorybank/ticket-progress.md` with status `🗂️ Backlog`. Do **not** create task files and do **not** write any application code — each ticket goes through the full D5 workflow when I run `StartTask`.
+
+Do not create component docs now. They are created in the Document phase as features are built.
+
 ---
 
 ### Step 5 — Confirm Completion
 
 After creating all files, show me:
 1. A tree of all files created
-2. Remind me to say **"generate project context"** to populate the rules from my actual codebase (in Claude Code, I can also run `/generate-project-context`)
-3. Remind me to say **"document components"** to generate/update component documentation
-4. Remind me the workflow commands: `StartTask {PREFIX}-001` and `ReviewTasks`
-5. If ASD-STE100 is enabled, confirm the mode and remind me that I can ask for any explanation "in ASD-STE100" or "in 80% ASD-STE100" (with the Claude Code plugin, also `/asd 80`, `/asd strict`, `/asd pane`)
-6. For `claude` or `both`, remind me to run `/context all` in a new Claude Code session to confirm that `CLAUDE.md` and `agents.md` are loaded
+2. **`existing` mode:** Remind me to say **"generate project context"** to populate the rules from my actual codebase (in Claude Code, I can also run `/generate-project-context`). Remind me to say **"document components"** to generate/update component documentation.
+   **`new` mode:** Tell me that `project-context.md` is based on the brief (`status: 'from_brief'`). Remind me to run **"generate project context"** again after `{PREFIX}-001` (scaffolding) is done, so that the rules come from the real code.
+3. Remind me the workflow commands: `StartTask {PREFIX}-001` and `ReviewTasks`
+4. If ASD-STE100 is enabled, confirm the mode and remind me that I can ask for any explanation "in ASD-STE100" or "in 80% ASD-STE100" (with the Claude Code plugin, also `/asd 80`, `/asd strict`, `/asd pane`)
+5. For `claude` or `both`, remind me to run `/context all` in a new Claude Code session to confirm that `CLAUDE.md` and `agents.md` are loaded
+6. For `local` sharing mode:
+   - Show the verification results (`git status --porcelain` and `git check-ignore -v`).
+   - Remind me of the merge flow: Document ends at `🚢 Awaiting Merge`. After the branch is merged into `{BASE_BRANCH}`, I run **`MergeMemorybankTask {PREFIX}-XXXX`** to apply the pending doc updates and close the task.
+   - Remind me that the harness exists only on this machine. Teammates do not get it from the repository.
+7. Remind me to start a **new chat/session**, because instruction files are loaded when a session starts.
