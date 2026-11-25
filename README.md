@@ -2,17 +2,17 @@
 
 ## What It Is
 
-A **meta-prompt** — a self-contained instruction set you copy and paste into an AI agent (GitHub Copilot or Claude Code) to bootstrap the entire D5 agentic workflow harness. It works for a **brand-new project** (you describe it) and for an **existing codebase** (the agent scans it). Think of it as a portable installer for a structured AI-assisted development workflow.
+A **meta-prompt** — a self-contained instruction set you copy and paste into an AI coding agent or CLI, including GitHub Copilot, Claude Code, Codex, Cursor, Gemini CLI, Cline, Roo Code, Windsurf, Continue, Aider, Amazon Q Developer, Amp, Zed, JetBrains AI Assistant, and OpenHands. It bootstraps the entire D5 agentic workflow harness for a **brand-new project** (you describe it) or an **existing codebase** (the agent scans it).
 
 ## What It Does
 
 When pasted into a project, it instructs the AI agent to:
 
-1. **Ask setup questions** — setup mode (new or existing project), AI tool (GitHub Copilot, Claude Code, or both), harness sharing (committed or local-only), project name, ticket prefix (e.g., `PROJ-`), output location, and an optional ASD-STE100 writing style
+1. **Ask setup questions** — setup mode (new or existing project), AI tool (GitHub Copilot, Claude Code, Codex, Cursor, Gemini CLI, Cline, Roo Code, Windsurf, Continue, Aider, Amazon Q Developer CLI, Amp, Zed, JetBrains AI Assistant, OpenHands, or another tool), harness sharing (committed or local-only), project name, ticket prefix (e.g., `PROJ-`), output location, and an optional ASD-STE100 writing style
 2. **Interview you for a project brief** *(new projects only)* — purpose, MVP scope, stack, architecture, data, integrations, auth, hosting, testing, conventions, constraints
 3. **Scaffold the entire file structure**, including:
-   - `agents.md` — behavioral guidelines (think first, simplicity, surgical changes)
-   - the instructions file (`.github/copilot-instructions.md` or `CLAUDE.md`, see [Supported AI Tools](#supported-ai-tools)) — the full D5 workflow (Define → Discover → Deliver → Demonstrate → Document) with phase gates and stop points
+   - behavioral guidelines — `agents.md` for Copilot/Claude; otherwise included in the selected platform's native instructions file
+   - the instructions file (for example, `.github/copilot-instructions.md`, `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.continue/rules/d5-workflow.md`, `CONVENTIONS.md`, or `.amazonq/rules/d5-workflow.md`, see [Supported AI Tools](#supported-ai-tools)) — the full D5 workflow (Define → Discover → Deliver → Demonstrate → Document) with phase gates and stop points
    - `memorybank/` folder with tracking files (`ticket-progress.md`, `changelog.md`, `architecture.md`, `features.md`, `integrations.md`, `setup.md`, `project-context.md`)
    - *(new projects)* `memorybank/project-brief.md` — the brief, open questions, and a decision log
    - `memorybank/components/` — per-feature documentation with a template
@@ -40,16 +40,32 @@ The first setup question picks the mode. The agent proposes a default based on w
 
 ## Supported AI Tools
 
-The second setup question picks the tool. The workflow content is the same for every tool. Only the file locations change:
+The second setup question picks one tool or a supported pair. The workflow content is the same for every tool; entry points and file locations vary:
 
-| | `copilot` | `claude` | `both` |
-|---|-----------|----------|--------|
-| Workflow instructions | `.github/copilot-instructions.md` | `CLAUDE.md` | `.github/copilot-instructions.md` |
-| Claude Code entry point | — | `CLAUDE.md` (imports `@agents.md`) | `CLAUDE.md` (imports `@agents.md` and `@.github/copilot-instructions.md`) |
-| Skills | `.github/skills/` | `.claude/skills/` | `.claude/skills/` (Copilot reads it too) |
-| ASD-STE100 (optional) | skill file | Claude Code plugin (or skill file) | skill file |
+| Choice | Workflow instructions | Skills |
+|--------|-----------------------|--------|
+| `copilot` | `.github/copilot-instructions.md` | `.github/skills/` |
+| `claude` | `CLAUDE.md` | `.claude/skills/` |
+| `codex` | `AGENTS.md` | `.agents/skills/` |
+| `cursor` | `AGENTS.md` | `.agents/skills/` |
+| [`gemini`](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md) | `GEMINI.md` | `.agents/skills/` |
+| [`cline`](https://docs.cline.bot/customization) | `AGENTS.md` | `.cline/skills/` |
+| [`roo`](https://github.com/RooCodeInc/Roo-Code-Docs/blob/main/docs/features/custom-instructions.md) | `AGENTS.md` | `.agents/skills/` |
+| [`windsurf`](https://docs.windsurf.com/windsurf/cascade/agents-md) | `AGENTS.md` | `.agents/skills/` |
+| [`continue`](https://docs.continue.dev/customize/rules) | `.continue/rules/d5-workflow.md` | `.agents/skills/` (explicitly read by the rule) |
+| [`aider`](https://aider.chat/docs/config/aider_conf.html) | `CONVENTIONS.md` + `.aider.conf.yml` | `.agents/skills/` (explicitly read by the instructions) |
+| [`amazonq`](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-project-rules.html) | `.amazonq/rules/d5-workflow.md` | `.agents/skills/` (explicitly read by the rule) |
+| [`amp`](https://ampcode.com/docs/markdown/customize/agents-md) | `AGENTS.md` | `.agents/skills/` |
+| [`zed`](https://zed.dev/docs/ai/instructions) | `AGENTS.md` | `.agents/skills/` (manual skill library) |
+| [`jetbrains`](https://www.jetbrains.com/help/ai-assistant/configure-project-rules.html) | `.aiassistant/rules/d5-workflow.md` | `.agents/skills/` (manual skill library) |
+| [`openhands`](https://docs.openhands.dev/overview/skills/repo) | `AGENTS.md` | `.agents/skills/` (manual skill library) |
+| `both` | `.github/copilot-instructions.md` + `CLAUDE.md` | `.claude/skills/` |
+| `codex-cursor` | `AGENTS.md` | `.agents/skills/` |
+| `other` | Confirm the native path from official docs | Confirm native skill support or use `.agents/skills/` as a manual library |
 
 > Claude Code does not read `agents.md` when a `CLAUDE.md` exists, so `CLAUDE.md` imports it with `@agents.md`.
+> Codex, Cursor, Cline, Roo Code, Windsurf, Amp, Zed, and OpenHands read root `AGENTS.md`. Gemini CLI uses `GEMINI.md`; Continue, Aider, Amazon Q Developer CLI, and JetBrains AI Assistant use their native rule/configuration files.
+> For tools that use `.agents/skills` or `.cline/skills`, skills are discoverable natively. For Continue, Aider, Amazon Q Developer CLI, Zed, JetBrains AI Assistant, and OpenHands, the instructions explicitly point to the skill file rather than relying on automatic discovery.
 
 ## Harness Sharing: Committed vs. Local-Only
 
@@ -62,7 +78,7 @@ The third setup question decides whether the harness is part of the repository. 
 | Document phase | Updates the memorybank docs directly on the branch → `✅ Done` | Writes **Pending Documentation Updates** into the task file → `🚢 Awaiting Merge` |
 | Closing a task | Automatic at the end of Document | **`MergeMemorybankTask PREFIX-XXXX`** after the branch is merged into the integration branch |
 | Repository `README.md` | Gets a harness section | Untouched — the section goes to `memorybank/README.md` |
-| Already-tracked files (e.g., a team `CLAUDE.md`) | Merged after your approval | Never modified — the agent uses a local alternative (`CLAUDE.local.md`, `.github/instructions/d5-workflow.instructions.md`, `memorybank/agents.md`) |
+| Already-tracked files (e.g., a team `CLAUDE.md`) | Merged after your approval | Never modified — the agent uses a local alternative where the platform supports one (for example, `CLAUDE.local.md`, `AGENTS.override.md`, `.cursor/rules/d5-workflow.mdc`, `.rules`, or `.continue/rules/d5-workflow.local.md`) |
 | ASD-STE100 Claude plugin | `--scope project` | `--scope local` |
 
 **Why the merge step exists (local mode):** the local memorybank describes the integration branch (e.g., `main` or `dev`). If an unmerged feature branch wrote straight into the baseline docs, they would describe code that the integration branch does not have yet. Instead, each task keeps its doc changes in the task file. After the merge, `MergeMemorybankTask` does the following:
@@ -78,7 +94,7 @@ The agent never runs state-changing git commands in this mode. At the end of set
 
 ## How To Use It
 
-1. Open GitHub Copilot Chat or Claude Code in your **target project**
+1. Open your selected AI coding tool in your **target project**
 2. Copy everything below the `---` separator in the file
 3. Paste it as a prompt
 4. Answer the 7 setup questions (setup mode, AI tool, harness sharing, project name, ticket prefix, output folder, ASD-STE100 writing style)

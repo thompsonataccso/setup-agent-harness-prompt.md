@@ -1,6 +1,6 @@
 # Agent Harness Setup Prompt
 
-> Copy the complete code block below and paste it into GitHub Copilot Chat, Claude Code, or any AI agent in your target project. The block includes project discovery and the project-context requirements.
+> Copy the complete code block below and paste it into GitHub Copilot Chat, Claude Code, Codex, Cursor, or any AI agent in your target project. The block includes project discovery and the project-context requirements.
 
 ---
 
@@ -18,10 +18,25 @@ Ask me the following questions before creating any files:
 1. **Setup mode** — Is this a new or an existing project?
    - `new` — new project with little or no code. You will interview me for the project details (Step 1b), because there is no codebase to learn from.
    - `existing` — existing codebase. You will learn the project details by scanning the code.
-2. **AI tool** — Which AI coding tool will this project use? If you can tell which tool you are running in, propose it as the default.
+2. **AI tool** — Which AI coding tool will this project use? If you can tell which tool you are running in, propose it as the default. Choose one option below; use `other` if yours is not listed.
    - `copilot` — GitHub Copilot (VS Code, Copilot CLI, Copilot coding agent)
    - `claude` — Claude Code
-   - `both` — both tools share one setup
+   - `codex` — OpenAI Codex
+   - `cursor` — Cursor
+   - `gemini` — Gemini CLI
+   - `cline` — Cline
+   - `roo` — Roo Code
+   - `windsurf` — Windsurf
+   - `continue` — Continue (VS Code, JetBrains, or CLI)
+   - `aider` — Aider
+   - `amazonq` — Amazon Q Developer CLI
+   - `amp` — Amp
+   - `zed` — Zed
+   - `jetbrains` — JetBrains AI Assistant
+   - `openhands` — OpenHands
+   - `both` — GitHub Copilot and Claude Code share one setup
+   - `codex-cursor` — Codex and Cursor share one setup
+   - `other` — another AI coding platform or CLI
 3. **Harness sharing** — Should the harness be committed to the repository, or used only on my machine?
    - `shared` — commit the harness files. The whole team uses the D5 workflow, and the memorybank follows each branch. (default)
    - `local` — local-only. The harness files are excluded via `.git/info/exclude` and are **never committed**. Use this when teammates use other workflows. The memorybank does not follow branches, so documentation updates are deferred and applied later with the `MergeMemorybankTask` command.
@@ -67,7 +82,7 @@ After I answer, summarize the brief, list the open questions, and ask me to conf
 Once I answer, create the following files. Replace `{PROJECT}` with the project name, `{PREFIX}` with the ticket prefix, and `{DATE}` with today's date.
 
 **Mode-specific rules:**
-- **`existing`** — Before creating each file, check whether it already exists (especially `agents.md`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and `README.md`). **Never overwrite an existing file.** Show me what you would add, propose a merge (keep the existing rules and add the harness sections), and wait for my approval.
+- **`existing`** — Before creating each file, check whether it already exists (especially `agents.md`, `AGENT.md`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/`, `.clinerules/`, `.cursorrules`, `.windsurfrules`, `.roo/rules/`, `.windsurf/rules/`, `.continue/rules/`, `.aider.conf.yml`, `CONVENTIONS.md`, `.amazonq/rules/`, `.aiassistant/rules/`, `.openhands/microagents/`, `.gemini/settings.json`, `.rules`, and `README.md`). **Never overwrite an existing file.** Show me what you would add, propose a merge (keep the existing rules and add the harness sections), and wait for my approval.
 - **`new`** — Also create `memorybank/project-brief.md` (template below) from the confirmed brief. Do not leave the memorybank files as empty placeholders. Fill them from the brief, and mark every item as **Planned** until code exists:
   - `architecture.md` — planned structure, modules, and data flow (from items 4–5)
   - `features.md` — MVP features with status `📋 Planned` (from item 2)
@@ -77,11 +92,28 @@ Once I answer, create the following files. Replace `{PROJECT}` with the project 
 
 Replace the tool-specific placeholders based on my answer to question 2:
 
-| Placeholder | `copilot` | `claude` | `both` |
-|-------------|-----------|----------|--------|
-| `{TOOL}` | GitHub Copilot | Claude Code | GitHub Copilot & Claude Code |
-| `{INSTRUCTIONS_FILE}` | `.github/copilot-instructions.md` | `CLAUDE.md` | `.github/copilot-instructions.md` |
-| `{SKILLS_DIR}` | `.github/skills` | `.claude/skills` | `.claude/skills` (both tools read this folder) |
+| Choice | `{TOOL}` | `{INSTRUCTIONS_FILE}` | `{SKILLS_DIR}` |
+|--------|----------|------------------------|----------------|
+| `copilot` | GitHub Copilot | `.github/copilot-instructions.md` | `.github/skills` |
+| `claude` | Claude Code | `CLAUDE.md` | `.claude/skills` |
+| `codex` | OpenAI Codex | `AGENTS.md` | `.agents/skills` |
+| `cursor` | Cursor | `AGENTS.md` | `.agents/skills` |
+| `gemini` | Gemini CLI | `GEMINI.md` | `.agents/skills` |
+| `cline` | Cline | `AGENTS.md` | `.cline/skills` |
+| `roo` | Roo Code | `AGENTS.md` | `.agents/skills` |
+| `windsurf` | Windsurf | `AGENTS.md` | `.agents/skills` |
+| `continue` | Continue | `.continue/rules/d5-workflow.md` | `.agents/skills` (explicitly read the skill file from the rule; do not assume native discovery) |
+| `aider` | Aider | `CONVENTIONS.md` (also configure `.aider.conf.yml` to read it) | `.agents/skills` (explicitly read the skill file from `CONVENTIONS.md`) |
+| `amazonq` | Amazon Q Developer CLI | `.amazonq/rules/d5-workflow.md` | `.agents/skills` (explicitly read the skill file from the rule) |
+| `amp` | Amp | `AGENTS.md` | `.agents/skills` |
+| `zed` | Zed | `AGENTS.md` | `.agents/skills` (manual skill library) |
+| `jetbrains` | JetBrains AI Assistant | `.aiassistant/rules/d5-workflow.md` | `.agents/skills` (manual skill library) |
+| `openhands` | OpenHands | `AGENTS.md` | `.agents/skills` (manual skill library) |
+| `both` | GitHub Copilot & Claude Code | `.github/copilot-instructions.md` | `.claude/skills` (both tools read this folder) |
+| `codex-cursor` | OpenAI Codex & Cursor | `AGENTS.md` | `.agents/skills` |
+| `other` | Ask me for the platform name | Confirm the native path from its official docs before creating files | Confirm skill support and path; otherwise use `.agents/skills` as a manual skill library |
+
+Treat these paths as defaults. Verify a selected tool's current official instructions when an existing configuration, version-specific behavior, or unlisted tool may change how files are loaded. Preserve existing settings and ask me when the correct integration is unclear.
 
 **Tool-specific rules:**
 - **`claude`** — Claude Code does not read `agents.md` when a `CLAUDE.md` exists. Put the line `@agents.md` directly below the title of `CLAUDE.md` so that Claude imports it.
@@ -93,12 +125,21 @@ Replace the tool-specific placeholders based on my answer to question 2:
   @agents.md
   @.github/copilot-instructions.md
   ```
+- **`codex`, `cursor`, `cline`, `roo`, `windsurf`, `amp`, `zed`, and `openhands`** — These tools read root `AGENTS.md`. Put the behavioral guidelines from the `agents.md` template at the start of `AGENTS.md`, followed by the D5 workflow instructions. Do not create a separate root `agents.md`; Windows treats `agents.md` and `AGENTS.md` as the same filename. Their project skill paths are in the table above.
+- **`gemini`** — Gemini CLI reads `GEMINI.md` by default and supports `@file.md` imports. Put the behavioral guidelines and D5 workflow in `GEMINI.md`; do not create a separate root `agents.md`.
+- **`continue`** — Put the behavioral guidelines and D5 workflow in `.continue/rules/d5-workflow.md`. Add YAML front matter with `name: D5 workflow` and `alwaysApply: true`. In that rule, tell Continue to read `{SKILLS_DIR}/generate-project-context/SKILL.md` when using that workflow.
+- **`aider`** — Put the behavioral guidelines and D5 workflow in `CONVENTIONS.md`. Add `CONVENTIONS.md` to the `read` list in `.aider.conf.yml`, preserving any existing settings. If Aider does not auto-load Agent Skills, tell it in `CONVENTIONS.md` to read `{SKILLS_DIR}/generate-project-context/SKILL.md` when needed.
+- **`amazonq`** — Put the behavioral guidelines and D5 workflow in `.amazonq/rules/d5-workflow.md`. In that rule, tell Amazon Q to read `{SKILLS_DIR}/generate-project-context/SKILL.md` when using that workflow.
+- **`jetbrains`** — Put the behavioral guidelines and D5 workflow in `.aiassistant/rules/d5-workflow.md`. Set the rule to **Always** in AI Assistant's project-rules settings, and tell it to read the skill file from `{SKILLS_DIR}` when needed.
+- **`zed`** — Zed uses the first matching project instruction file in its documented precedence order. Check for existing `.rules`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`, `AGENT.md`, `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`; use or merge into the file Zed will load. Use `AGENTS.md` only when no higher-priority file takes precedence.
+- **`codex-cursor`** — Both tools share `AGENTS.md` and `.agents/skills`. Use the same combined `AGENTS.md` layout as for Codex.
+- **`other`** — Ask for the exact tool name and version. Check its official documentation for project instruction and skill support. Do not guess paths or claim automatic skill discovery. If the documentation does not resolve the setup, ask me before creating files.
 
 **Sharing rule (`local`):** Before creating any file, run the pre-check in **Local-Only Mode** (end of Step 2). It can change some of the target paths above.
 
 ---
 
-#### File: `agents.md` (project root)
+#### File: `agents.md` (project root; merge this content into the selected instructions file for tools that do not load `agents.md` directly)
 
 ```markdown
 # Agent Behavioral Guidelines
@@ -300,7 +341,7 @@ When the user says **"ReviewTasks"** (or similar), review all in-progress tasks:
   3. **Correctness** — logic errors, edge cases (null/empty, boundaries, error paths), concurrency, resource cleanup.
   4. **Security** — input validation, injection, authorization checks, no secrets in code or logs.
   5. **Project rules** — follows `memorybank/project-context.md` and the business rules in affected `memorybank/components/*.md`.
-  6. **Behavioral guidelines** — follows `agents.md`: simplest solution, surgical changes, no speculative code, orphans removed.
+  6. **Behavioral guidelines** — follows `agents.md`, or the guidelines included in the selected native instructions file: simplest solution, surgical changes, no speculative code, orphans removed.
   7. **Tests** — new and changed behavior is covered; tests check behavior, not implementation details.
   8. **Hygiene** — no debug output, commented-out code, stray TODOs, or temporary files.
 - **Classify each finding:**
@@ -712,7 +753,7 @@ Scan the project for:
 1. **Tech-stack signals** — package manifests, runtimes, frameworks, versions
 2. **Config signals** — linters, formatters, tsconfig, CI files, editor configs
 3. **Source-tree signals** — naming conventions, layering, entry points
-4. **Existing agent rules** — CLAUDE.md, AGENTS.md, .cursorrules
+4. **Existing agent rules** — CLAUDE.md, AGENTS.md, .cursor/rules/, .cursorrules
 
 Build a structured discovery summary and present it to the user.
 
@@ -828,7 +869,7 @@ _(1–2 sentences: what this feature does from the user's perspective)_
 Skip this section if I answered `no` to question 7. Otherwise, replace `{STE_MODE}` with `80% Pragmatic Mode` (answer `80`) or `Strict Mode` (answer `strict`) and do the following:
 
 1. **Install the skill** (MIT licensed — keep the upstream files unchanged):
-   - **`copilot` or `both`:** Download https://raw.githubusercontent.com/JAICHANGPARK/ASD-STE100/main/skills/asd-ste100/SKILL.md and save it **unchanged** to `{SKILLS_DIR}/asd-ste100/SKILL.md`. If you cannot access the network, give me the URL and target path and ask me to save the file myself.
+   - **`copilot`, `both`, `codex`, `cursor`, `codex-cursor`, `gemini`, `cline`, `roo`, `windsurf`, `continue`, `aider`, `amazonq`, `amp`, `zed`, `jetbrains`, `openhands`, or `other`:** Download https://raw.githubusercontent.com/JAICHANGPARK/ASD-STE100/main/skills/asd-ste100/SKILL.md and save it **unchanged** to `{SKILLS_DIR}/asd-ste100/SKILL.md`. If you cannot access the network, give me the URL and target path and ask me to save the file myself.
    - **`claude`:** Recommend the full Claude Code plugin. It includes the skill plus the `/asd` command, the STE side pane, and STE lint/rewrite tools, and it requires Claude Code v2.1.287 or later. Show me these commands and ask whether you should run them or whether I run them myself:
 
      ```bash
@@ -878,10 +919,24 @@ Skip this section if I answered `shared`. Otherwise, replace `{BASE_BRANCH}` wit
    |--------------|-------------------|
    | `.github/copilot-instructions.md` | `.github/instructions/d5-workflow.instructions.md`, with front matter `applyTo: "**"` at the top |
    | `CLAUDE.md` | `CLAUDE.local.md` (Claude Code loads it next to `CLAUDE.md`) |
-   | `agents.md` / `AGENTS.md` | `memorybank/agents.md`. Add the line `Also read and follow memorybank/agents.md.` below the title of the instructions file (for Claude Code: `@memorybank/agents.md`). |
+   | `agents.md` | `memorybank/agents.md`. Add the line `Also read and follow memorybank/agents.md.` below the title of the instructions file (for Claude Code: `@memorybank/agents.md`). |
+   | `AGENTS.md` (Codex) | `AGENTS.override.md`, which Codex loads in preference to `AGENTS.md` |
+   | `AGENTS.md` (Cursor) | `.cursor/rules/d5-workflow.mdc`, with front matter `description: D5 workflow` and `alwaysApply: true` |
+   | `AGENTS.md` (Cline) | `.clinerules/d5-workflow.md` |
+   | `AGENTS.md` (Roo Code) | `.roo/rules/d5-workflow.md` |
+   | `AGENTS.md` (Windsurf) | `.windsurf/rules/d5-workflow.md`, using the current documented always-on rule front matter |
+   | `AGENTS.md` (Amp) | No per-project alternative. Stop and ask me whether to use shared mode or another supported tool; do not write personal Amp guidance for a project |
+   | `AGENTS.md` (Zed) | `.rules`, which Zed recognizes as a project instruction file |
+   | `AGENTS.md` (OpenHands) | `.openhands/microagents/repo.md` with `type: repo` front matter |
+   | `.rules` (Zed) | No alternate project rule file. Stop and ask me if `.rules` is already tracked |
+   | `GEMINI.md` | `.gemini/settings.json` with `contextFileName: ["GEMINI.md", "GEMINI.local.md"]`, plus `GEMINI.local.md`; if the settings file is tracked, stop and ask me |
+   | `.continue/rules/d5-workflow.md` | `.continue/rules/d5-workflow.local.md` |
+   | `CONVENTIONS.md` (Aider) | `CONVENTIONS.local.md` and `.aider.local.conf.yml`; I must run Aider with `--config .aider.local.conf.yml` |
+   | `.amazonq/rules/d5-workflow.md` | `.amazonq/rules/d5-workflow.local.md` |
+   | `.aiassistant/rules/d5-workflow.md` | `.aiassistant/rules/d5-workflow.local.md`, set to **Always** in AI Assistant's project-rules settings |
    | `README.md` | Do not change — see D below |
 
-3. If you use an alternative path, update every reference and `@` import to it (e.g., the `both`-mode `CLAUDE.md` imports). This rule overrides the `existing`-mode rule that merges into existing files: in `local` mode, a tracked file is never merged into.
+3. If you use an alternative path, put the full combined instructions in each selected alternative and update every reference and `@` import to it (e.g., the `both`-mode `CLAUDE.md` imports). For `codex-cursor`, use both local alternatives when `AGENTS.md` is tracked. For Aider, configure its local config to read `CONVENTIONS.local.md`. If an existing tracked file has no listed native alternative, stop and ask me rather than changing it. This rule overrides the `existing`-mode rule that merges into existing files: in `local` mode, a tracked file is never merged into.
 4. Show me the final list of paths that you will create, and wait for my approval.
 
 **B. Exclude the harness from git**
@@ -891,12 +946,11 @@ Append this block to `.git/info/exclude`, and skip any line that is already pres
 ```text
 # Local-only agentic workflow harness (D5)
 memorybank/
-agents.md
 {INSTRUCTIONS_FILE}
 {SKILLS_DIR}/generate-project-context/
 ```
 
-Also add these lines where they apply: `CLAUDE.md` (`both`), `{SKILLS_DIR}/asd-ste100/` (ASD-STE100 skill file), `.claude/settings.local.json` (ASD-STE100 plugin), and any local alternative from A. Do **not** exclude the whole `{SKILLS_DIR}/` folder, so that skills the team commits stay visible to git.
+If the selected tool uses a separate `agents.md` (`copilot`, `claude`, or `both`), add it to the exclude block. Otherwise, add the tool's native instructions path instead of `agents.md`. For Aider, exclude `.aider.conf.yml` if it is new, or `.aider.local.conf.yml` when the tracked config must remain unchanged; also exclude the matching `CONVENTIONS` file. For Gemini CLI, exclude `.gemini/settings.json` if created. Add these lines where they apply: `CLAUDE.md` (`both`), `{SKILLS_DIR}/asd-ste100/` (ASD-STE100 skill file), `.claude/settings.local.json` (ASD-STE100 plugin), and any local alternative from A. Do **not** exclude the whole `{SKILLS_DIR}/` folder, so that skills the team commits stay visible to git.
 
 **C. Add the merge workflow to the instructions file**
 
@@ -1000,7 +1054,7 @@ Report the results in Step 5.
 Add a section to the project's `README.md` (create one if it doesn't exist) that documents the agent harness. Include:
 
 1. **Development Workflow (D5)** — brief description + table of commands (`StartTask {PREFIX}-XXXX`, `ReviewTasks`)
-2. **Agent Configuration** — table linking to `{INSTRUCTIONS_FILE}`, `agents.md`, `memorybank/project-context.md` (and `CLAUDE.md` for `both`)
+2. **Agent Configuration** — table linking to `{INSTRUCTIONS_FILE}`, `agents.md` (only when the selected tool uses a separate file), and `memorybank/project-context.md` (and `CLAUDE.md` for `both`)
 3. **Documentation (Memory Bank)** — table of all memorybank files with descriptions
 4. **Component Documentation** — table linking to each `memorybank/components/*.md` file (initially just the `_index.md` template reference)
 
@@ -1037,6 +1091,11 @@ All development follows the **D5 agentic workflow** with continuous progress tra
 | `memorybank/changelog.md` | Ad-hoc changes outside task files |
 | `memorybank/components/` | Per-feature documentation (business rules, data flow, validation) |
 ```
+
+For every tool except `copilot`, `claude`, and `both`, put both the D5 workflow and behavioral guidelines in its native instructions file; omit the separate `agents.md` row. For `codex-cursor`, use the shared `AGENTS.md`. In local-only mode, use the approved local alternative path or paths instead.
+
+For `aider`, also document `.aider.conf.yml` in the Agent Configuration table.
+For `jetbrains`, remind me to set the D5 rule to **Always** in AI Assistant's project-rules settings.
 
 For `both`, also add this row to the **Agent Configuration** table:
 
@@ -1104,9 +1163,10 @@ After creating all files, show me:
 3. Remind me the workflow commands: `StartTask {PREFIX}-001` and `ReviewTasks`
 4. If ASD-STE100 is enabled, confirm the mode and remind me that I can ask for any explanation "in ASD-STE100" or "in 80% ASD-STE100" (with the Claude Code plugin, also `/asd 80`, `/asd strict`, `/asd pane`)
 5. For `claude` or `both`, remind me to run `/context all` in a new Claude Code session to confirm that `CLAUDE.md` and `agents.md` are loaded
-6. For `local` sharing mode:
+6. For `jetbrains`, remind me to set the D5 project rule to **Always** if it was not enabled during setup
+7. For `local` sharing mode:
    - Show the verification results (`git status --porcelain` and `git check-ignore -v`).
    - Remind me of the merge flow: Document ends at `🚢 Awaiting Merge`. After the branch is merged into `{BASE_BRANCH}`, I run **`MergeMemorybankTask {PREFIX}-XXXX`** to apply the pending doc updates and close the task.
    - Remind me that the harness exists only on this machine. Teammates do not get it from the repository.
-7. Remind me to start a **new chat/session**, because instruction files are loaded when a session starts.
+8. Remind me to start a **new chat/session**, because instruction files are loaded when a session starts.
 ````
